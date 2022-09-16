@@ -1,36 +1,40 @@
-from typing import Dict, List
-
-import yaml
-from yaml.loader import SafeLoader
-import json
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Union
 
 from .utils import *
+from .readers import _READERS
 
-
-def read_yaml(path:str)->Dict:
-    with open(path) as file:
-        data = yaml.load(file, Loader=SafeLoader)
-        return data
-
-def read_json(path:str)->Dict:
-    with open(path) as file:
-        data = json.load(file)
-    return data
-
-_READERS = {".yaml": read_yaml, ".json": read_json}
-
-def get_config_filepath_from_dir(path: str) -> List[str]:
+def get_config_file_from_dir(path: str) -> List[str]:
     extensions = _READERS.keys()
     files = get_file_list_from_dir(path)
     config_files = [x for x in files if get_file_extension(x) in extensions]
     return config_files
-    
-  
-class Loader:
 
-    def __init__(self, path: str) -> None:
-        self.path = path
-        self.extension = get_file_extension(path)
+class BaseLoader(ABC):
+
+    @abstractmethod
+    def load(self, path: Any) -> Dict:
+        pass
+
+    @abstractmethod
+    def extension(self, path: Any) -> Any:
+        pass
     
-    def load(self):
-        return _READERS[self.extension](self.path)
+    @abstractmethod
+    def data(self):
+        pass
+
+class SingleFileLoader(BaseLoader):
+
+    def __init__(self) -> None:
+        self._is_loaded = False
+    
+    def load(self, path: str) -> Dict:
+        return super().load(path)
+
+    def data(self, path: str):
+        data = _READERS[self.extension(path)](path)
+        return data
+    
+    def extension(self, path: str) -> str: 
+        return get_file_extension(path)

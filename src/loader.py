@@ -1,8 +1,7 @@
-from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Union
+from abc import ABC, abstractmethod, abstractproperty
+from typing import Any, Dict, List, Sequence, Union
 
 from .utils import *
-from .readers import _READERS
 
 def get_config_file_from_dir(path: str) -> List[str]:
     extensions = _READERS.keys()
@@ -13,28 +12,29 @@ def get_config_file_from_dir(path: str) -> List[str]:
 class BaseLoader(ABC):
 
     @abstractmethod
-    def load(self, path: Any) -> Dict:
+    def _read(self) -> None:
         pass
 
-    @abstractmethod
-    def extension(self, path: Any) -> Any:
+    @abstractproperty
+    def data(self) -> Any:
         pass
     
-    @abstractmethod
+class ConfigLoader(BaseLoader):
+
+    def __init__(self, path: str) -> None:
+        self._path = path
+        self._data = None
+        self._extension = get_file_extension(path)
+    
+    def _load(self) -> None:
+        self._data = _READERS[self._extension](self._path)
+    
+    @property
     def data(self):
-        pass
-
-class SingleFileLoader(BaseLoader):
-
-    def __init__(self) -> None:
-        self._is_loaded = False
+        if not self._data:
+            self._load()
+        return self._data
     
-    def load(self, path: str) -> Dict:
-        return super().load(path)
 
-    def data(self, path: str):
-        data = _READERS[self.extension(path)](path)
-        return data
     
-    def extension(self, path: str) -> str: 
-        return get_file_extension(path)
+

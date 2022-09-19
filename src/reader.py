@@ -23,7 +23,7 @@ _CONF_READER_FUNCS = {".yaml": read_yaml, ".json": read_json}
 class BaseReader(ABC):
 
     @abstractmethod
-    def _load(self) -> None:
+    def _read(self) -> None:
         pass
 
     @abstractproperty
@@ -40,7 +40,7 @@ class ConfigReader(BaseReader):
     def _is_valid_extension(self):
         return self._extension in _CONF_READER_FUNCS.keys()
     
-    def _load(self) -> None:
+    def _read(self) -> Dict:
         if self._is_valid_extension():
             self._data = _CONF_READER_FUNCS[self._extension](self._path)
         else:
